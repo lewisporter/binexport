@@ -18,11 +18,9 @@
 #include <string>
 
 #include "third_party/zynamics/binexport/ida/pro_forward.h"  // NOLINT
-#include <idp.hpp>                                           // NOLINT
-#include <allins.hpp>                                        // NOLINT
-#include <bytes.hpp>                                         // NOLINT
-#include <ida.hpp>                                           // NOLINT
-#include <ua.hpp>                                            // NOLINT
+#include "third_party/idasdk/include/idp.hpp"                // NOLINT
+#include "third_party/idasdk/include/allins.hpp"             // NOLINT
+
 
 #include "base/logging.h"
 #include "base/stringprintf.h"
@@ -81,7 +79,7 @@ enum shift_t {
 };
 
 // Returns the string representation for a given barrel shifter type.
-const char* GetShift(size_t shift_type) {
+const char* GetShift(shift_t shift_type) {
   // TODO(cblichmann): We should be using shift_t from arm.hpp
   switch (shift_type) {
     case LSL:
@@ -211,7 +209,7 @@ Operands DecodeOperandsArm(const insn_t& instruction) {
 
         if (operand.value) {  // shift
           expressions.push_back(expression = Expression::Create(
-                                    expression, GetShift(static_cast<size_t>(operand.specflag2)), 0,
+                                    expression, GetShift(static_cast<shift_t>(operand.specflag2)), 0,
                                     Expression::TYPE_OPERATOR, 1));
           expressions.push_back(Expression::Create(
               expression,
@@ -349,7 +347,7 @@ Operands DecodeOperandsArm(const insn_t& instruction) {
                                                   instruction, operand)),
                                   0, Expression::TYPE_SIZEPREFIX, 0));
         expressions.push_back(
-            expression = Expression::Create(expression, GetShift(shiftType), 0,
+            expression = Expression::Create(expression, GetShift(static_cast<shift_t>(shiftType)), 0,
                                             Expression::TYPE_OPERATOR, 0));
         expressions.push_back(Expression::Create(
             expression,
@@ -367,7 +365,7 @@ Operands DecodeOperandsArm(const insn_t& instruction) {
         } else {
           expressions.push_back(Expression::Create(
               expression,
-              GetRegisterName(shiftRegister,
+              GetRegisterName(static_cast<size_t>(shiftRegister),
                               GetOperandByteSize(instruction, operand)),
               0, Expression::TYPE_REGISTER, 1));
         }
@@ -407,10 +405,10 @@ Operands DecodeOperandsArm(const insn_t& instruction) {
             expression, GetCoprocessorRegisterName(operand.reg), 0,
             Expression::TYPE_REGISTER, 0));
         expressions.push_back(Expression::Create(
-            expression, GetCoprocessorRegisterName(operand.specflag1), 0,
+            expression, GetCoprocessorRegisterName(static_cast<size_t>(operand.specflag1)), 0,
             Expression::TYPE_REGISTER, 1));
         expressions.push_back(Expression::Create(
-            expression, GetCoprocessorRegisterName(operand.specflag2), 0,
+            expression, GetCoprocessorRegisterName(static_cast<size_t>(operand.specflag2)), 0,
             Expression::TYPE_REGISTER, 2));
         break;
       }
@@ -492,7 +490,7 @@ Instruction ParseInstructionIdaArm(const insn_t& instruction,
   }
 
   Address next_instruction = 0;
-  xrefblk_t xref;
+  xrefblk_t xref{};
   for (bool ok = xref.first_from(static_cast<ea_t>(instruction.ea), XREF_ALL);
        ok && xref.iscode; ok = xref.next_from()) {
     if (xref.type == fl_F) {
@@ -514,6 +512,8 @@ Instruction ParseInstructionIdaArm(const insn_t& instruction,
     case ARM_fstmx:
       precision = 'X';
       break;
+      default:
+          LOG(INFO) << StringPrintf("warning: unknown instruction type %d at %08", instruction.itype, instruction.ea);
   }
 
   if (instruction.itype == ARM_it) {
@@ -746,7 +746,7 @@ Instruction ParseInstructionIdaArm(const insn_t& instruction,
   }
 
   if (instruction.insnpref & 0x80) {
-    switch (neon_datatype_t(instruction.insnpref & 0x7F)) {
+    switch (static_cast<int>(neon_datatype_t(instruction.insnpref & 0x7F))) {
       case 0x0:
         break;  // DT_NONE = 0,
       case 0x1:
@@ -819,7 +819,7 @@ Instruction ParseInstructionIdaArm(const insn_t& instruction,
 
   if (instruction.itype == ARM_vcvt || instruction.itype == ARM_vcvtr ||
       instruction.itype == ARM_vcvtb || instruction.itype == ARM_vcvtt) {
-    switch (neon_datatype_t(instruction.Op1.specflag1)) {
+    switch (static_cast<int>(neon_datatype_t(instruction.Op1.specflag1))) {
       case 0x0:
         break;  // DT_NONE = 0,
       case 0x1:

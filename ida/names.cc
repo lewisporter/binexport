@@ -21,16 +21,16 @@
 #include <tuple>
 
 #include "third_party/zynamics/binexport/ida/pro_forward.h"  // NOLINT
-#include <idp.hpp>                                           // NOLINT
-#include <allins.hpp>                                        // NOLINT
-#include <enum.hpp>                                          // NOLINT
-#include <frame.hpp>                                         // NOLINT
-#include <ida.hpp>                                           // NOLINT
-#include <name.hpp>                                          // NOLINT
-#include <segment.hpp>                                       // NOLINT
-#include <struct.hpp>                                        // NOLINT
-#include <typeinf.hpp>                                       // NOLINT
-#include <ua.hpp>                                            // NOLINT
+#include "third_party/idasdk/include/idp.hpp"                // NOLINT
+#include "third_party/idasdk/include/enum.hpp"               // NOLINT
+#include "third_party/idasdk/include/frame.hpp"              // NOLINT
+#include "third_party/idasdk/include/name.hpp"               // NOLINT
+#include "third_party/idasdk/include/segment.hpp"            // NOLINT
+#include "third_party/idasdk/include/struct.hpp"             // NOLINT
+#include "third_party/idasdk/include/typeinf.hpp"            // NOLINT
+#include "third_party/idasdk/include/allins.hpp"             // NOLINT
+#include "third_party/idasdk/include/ida.hpp"                // NOLINT
+#include "third_party/idasdk/include/ua.hpp"                 // NOLINT
 
 #include "base/logging.h"
 #include "base/stringprintf.h"
@@ -453,7 +453,7 @@ std::string GetDemangledName(Address address) {
   return "";
 }
 
-std::string GetRegisterName(size_t index, size_t segment_size) {
+std::string GetRegisterName(char index, size_t segment_size) {
   enum { kBufferSize = MAXSTR };
   char buffer[kBufferSize];
   memset(buffer, 0, kBufferSize);
